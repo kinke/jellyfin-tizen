@@ -50,12 +50,6 @@ function _AvplayVideoPlayer(modules) {
                     Codec: 'h264',
                     Conditions: [
                         {
-                            Condition: 'NotEquals',
-                            IsRequired: false,
-                            Property: 'IsAnamorphic',
-                            Value: 'true'
-                        },
-                        {
                             Condition: 'EqualsAny',
                             IsRequired: false,
                             Property: 'VideoProfile',
@@ -73,12 +67,6 @@ function _AvplayVideoPlayer(modules) {
                 {
                     Codec: 'hevc',
                     Conditions: [
-                        {
-                            Condition: 'NotEquals',
-                            IsRequired: false,
-                            Property: 'IsAnamorphic',
-                            Value: 'true'
-                        },
                         {
                             Condition: 'EqualsAny',
                             IsRequired: false,
@@ -105,14 +93,14 @@ function _AvplayVideoPlayer(modules) {
                 },
                 {
                     Container: 'mp4,m4v',
-                    AudioCodec: 'aac,mp3,ac3,eac3,mp2,pcm_s16le,pcm_s24le,aac_latm,opus,flac,vorbis',
-                    VideoCodec: 'h264,hevc,mpeg2video,vc1,msmpeg4v2,vp8,vp9',
+                    AudioCodec: 'aac,mp3,ac3,eac3,ac4,mp2,pcm_s16le,pcm_s24le,aac_latm,opus,flac,vorbis',
+                    VideoCodec: 'h264,hevc,mpeg2video,vc1,msmpeg4v2,vp8,vp9,av1',
                     Type: 'Video'
                 },
                 {
                     Container: 'mkv',
-                    AudioCodec: 'aac,mp3,ac3,eac3,mp2,pcm_s16le,pcm_s24le,aac_latm,opus,flac,vorbis',
-                    VideoCodec: 'h264,hevc,mpeg2video,vc1,msmpeg4v2,vp8,vp9',
+                    AudioCodec: 'aac,mp3,ac3,eac3,ac4,mp2,pcm_s16le,pcm_s24le,aac_latm,opus,flac,vorbis',
+                    VideoCodec: 'h264,hevc,mpeg2video,vc1,msmpeg4v2,vp8,vp9,av1',
                     Type: 'Video'
                 },
                 {
@@ -127,8 +115,8 @@ function _AvplayVideoPlayer(modules) {
                 },
                 {
                     Container: 'ts,mpegts',
-                    AudioCodec: 'aac,mp3,ac3,eac3,mp2,pcm_s16le,pcm_s24le,aac_latm,opus,flac,vorbis',
-                    VideoCodec: 'h264,hevc,vc1,mpeg2video',
+                    AudioCodec: 'aac,mp3,ac3,eac3,ac4,mp2,pcm_s16le,pcm_s24le,aac_latm,opus,flac,vorbis',
+                    VideoCodec: 'h264,hevc,vc1,mpeg2video,av1',
                     Type: 'Video'
                 },
                 {
@@ -333,8 +321,8 @@ function _AvplayVideoPlayer(modules) {
             }, {
                 Container: "mkv",
                 Type: 'Video',
-                VideoCodec: "h264,hevc,mpeg2video,vc1,msmpeg4v2,vp8,vp9",
-                AudioCodec: "aac,mp3,ac3,eac3,mp2,pcm_s16le,pcm_s24le,aac_latm,opus,flac,vorbis",
+                VideoCodec: "h264,hevc,mpeg2video,vc1,msmpeg4v2,vp8,vp9,av1",
+                AudioCodec: "aac,mp3,ac3,eac3,ac4,mp2,pcm_s16le,pcm_s24le,aac_latm,opus,flac,vorbis",
                 Protocol: "",
                 EstimateContentLength: false,
                 EnableMpegtsM2TsMode: false,
@@ -349,8 +337,8 @@ function _AvplayVideoPlayer(modules) {
             }, {
                 Container: "ts",
                 Type: 'Video',
-                VideoCodec: "h264,hevc",
-                AudioCodec: "aac,mp3,ac3,eac3,opus",
+                VideoCodec: "h264,hevc,av1",
+                AudioCodec: "aac,mp3,ac3,eac3,ac4,opus",
                 Protocol: "hls",
                 EstimateContentLength: false,
                 EnableMpegtsM2TsMode: false,
@@ -381,8 +369,8 @@ function _AvplayVideoPlayer(modules) {
             }, {
                 Container: "mp4",
                 Type: 'Video',
-                VideoCodec: "h264",
-                AudioCodec: "aac,mp3,ac3,eac3,mp2,pcm_s16le,pcm_s24le,aac_latm,opus,flac,vorbis",
+                VideoCodec: "h264,hevc,av1",
+                AudioCodec: "aac,mp3,ac3,eac3,ac4,mp2,pcm_s16le,pcm_s24le,aac_latm,opus,flac,vorbis",
                 Protocol: "http",
                 EstimateContentLength: false,
                 EnableMpegtsM2TsMode: false,
@@ -453,8 +441,10 @@ function _AvplayVideoPlayer(modules) {
 
         if (elem) {
             console.debug('stop 1', webapis.avplay.getState());
+            /*
             webapis.avplay.pause();
             console.debug('stop 2', webapis.avplay.getState());
+            */
 
             this.onEnded();
 
@@ -586,7 +576,7 @@ function _AvplayVideoPlayer(modules) {
                     self.onEnded();
                 },
 
-                oncurrentplaytime: function ()  {
+                oncurrentplaytime: function (currentTime)  {
                     self.Events.trigger(self, 'timeupdate');
                 },
 
