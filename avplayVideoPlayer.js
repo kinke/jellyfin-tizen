@@ -667,6 +667,7 @@ function _AvplayVideoPlayer(modules) {
 
         console.debug('setting new text track index to: ' + streamIndex);
 
+        var textIndex = -1;
         var track = null;
 
         if (streamIndex !== -1) {
@@ -675,9 +676,15 @@ function _AvplayVideoPlayer(modules) {
             console.debug('TextTracks:', textTracks);
             console.debug(webapis.avplay.getTotalTrackInfo());
 
-            track = textTracks.filter(function (t) {
-                return t.Index === streamIndex;
-            })[0];
+            for (var i = 0; i < textTracks.length; i++) {
+                var t = textTracks[i];
+
+                if (t.Index === streamIndex) {
+                    textIndex = i;
+                    track = t;
+                    break;
+                }
+            }
         }
 
         if (track) {
@@ -698,7 +705,17 @@ function _AvplayVideoPlayer(modules) {
                     }
                 });
             } else if (track.DeliveryMethod === 'Embed') {
-                webapis.avplay.setSelectTrack('TEXT', streamIndex);
+                var textTracks = webapis.avplay.getTotalTrackInfo().filter(function (t) {
+                    return t.type === 'TEXT';
+                });
+
+                console.debug('TextTracks:', textTracks);
+
+                if (textIndex < textTracks.length) {
+                    webapis.avplay.setSelectTrack('TEXT', textTracks[textIndex].index);
+                } else {
+                    console.error('[setSubtitleStreamIndex] Out of bound');
+                }
             }
         } else {
             webapis.avplay.setSilentSubtitle(true);
