@@ -1,3 +1,15 @@
+function getMediaStreamAudioTracks(mediaSource) {
+    return mediaSource.MediaStreams.filter(function (s) {
+        return s.Type === 'Audio';
+    });
+}
+
+function getMediaStreamTextTracks(mediaSource) {
+    return mediaSource.MediaStreams.filter(function (s) {
+        return s.Type === 'Subtitle';
+    });
+}
+
 function _AvplayVideoPlayer(modules) {
     console.debug('AVPlay Video Player');
 
@@ -610,15 +622,43 @@ function _AvplayVideoPlayer(modules) {
     }
 
     this.setAudioStreamIndex = function (streamIndex) {
+        var self = this;
+
         console.debug('setting new audio track index to: ' + streamIndex);
 
-        if (streamIndex != null && streamIndex >= 0) {
-            const streams = webapis.avplay.getTotalTrackInfo();
-            if (streamIndex < streams.length && streams[streamIndex].type === 'AUDIO') {
-                webapis.avplay.setSelectTrack('AUDIO', streamIndex);
-            } else {
-                console.error('[setAudioStreamIndex] Out of bound');
+        var audioIndex = -1;
+
+        if (streamIndex !== -1) {
+            var audioTracks = getMediaStreamAudioTracks(self._currentPlayOptions.mediaSource);
+
+            console.debug('AudioTracks:', audioTracks);
+
+            for (var i = 0; i < audioTracks.length; i++) {
+                var track = audioTracks[i];
+
+                if (track.Index === streamIndex) {
+                    audioIndex = i;
+                    break;
+                }
             }
+        }
+
+        if (audioIndex === -1) {
+            return;
+        }
+
+        var audioTracks = webapis.avplay.getTotalTrackInfo().filter(function (t) {
+            return t.type === 'AUDIO';
+        });
+
+        console.debug('AudioTracks:', audioTracks);
+
+        if (audioIndex < audioTracks.length) {
+            var track = audioTracks[audioIndex];
+
+            webapis.avplay.setSelectTrack('AUDIO', track.index);
+        } else {
+            console.error('[setAudioStreamIndex] Out of bound');
         }
     }
 
@@ -627,10 +667,22 @@ function _AvplayVideoPlayer(modules) {
 
         console.debug('setting new text track index to: ' + streamIndex);
 
-        if (streamIndex != null && streamIndex >= 0) {
-            const stream = this._currentPlayOptions.mediaSource.MediaStreams[streamIndex];
-            if (stream.DeliveryMethod === 'External') {
-                var downloadRequest = new tizen.DownloadRequest(window.ApiClient.getUrl(stream.DeliveryUrl), 'wgt-private-tmp');
+        var track = null;
+
+        if (streamIndex !== -1) {
+            var textTracks = getMediaStreamTextTracks(self._currentPlayOptions.mediaSource);
+
+            console.debug('TextTracks:', textTracks);
+            console.debug(webapis.avplay.getTotalTrackInfo());
+
+            track = textTracks.filter(function (t) {
+                return t.Index === streamIndex;
+            })[0];
+        }
+
+        if (track) {
+            if (track.DeliveryMethod === 'External') {
+                var downloadRequest = new tizen.DownloadRequest(window.ApiClient.getUrl(track.DeliveryUrl), 'wgt-private-tmp');
 
                 tizen.download.start(downloadRequest, {
                     oncompleted: function (downloadId, fullPath) {
@@ -645,13 +697,8 @@ function _AvplayVideoPlayer(modules) {
                         console.log('Failed to download Subtitle', error);
                     }
                 });
-            } else if (stream.DeliveryMethod === 'Embed') {
-                const streams = webapis.avplay.getTotalTrackInfo();
-                if (streamIndex < streams.length && streams[streamIndex].type === 'TEXT') {
-                    webapis.avplay.setSelectTrack('TEXT', streamIndex);
-                } else {
-                    console.error('[setSubtitleStreamIndex] Out of bound');
-                }
+            } else if (track.DeliveryMethod === 'Embed') {
+                webapis.avplay.setSelectTrack('TEXT', streamIndex);
             }
         } else {
             webapis.avplay.setSilentSubtitle(true);
