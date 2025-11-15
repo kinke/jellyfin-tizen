@@ -10,6 +10,16 @@ function getMediaStreamTextTracks(mediaSource) {
     });
 }
 
+function normalizeSubtitleText(text) {
+    const result = text
+        .replace(/\\N/gi, '\n') // Correct newline characters
+        .replace(/\r/gi, '') // Remove carriage return characters
+        .replace(/{\\.*?}/gi, '') // Remove ass/ssa tags
+        // Force LTR as the default direction
+        .split('\n').map(val => `\u200E${val}`).join('\n');
+    return result.replace(/\n/gi, '<br>');
+}
+
 function _AvplayVideoPlayer(modules) {
     console.debug('AVPlay Video Player');
 
@@ -417,6 +427,20 @@ function _AvplayVideoPlayer(modules) {
                 webapis.avplay.play();
                 console.debug('play 2', webapis.avplay.getState());
 
+                if (!self._videoSubtitlesElem) {
+                    let subtitlesContainer = document.querySelector('.avplaySubtitles');
+                    if (!subtitlesContainer) {
+                        subtitlesContainer = document.createElement('div');
+                        subtitlesContainer.classList.add('avplaySubtitles');
+                    }
+                    const subtitlesElement = document.createElement('div');
+                    subtitlesElement.classList.add('avplaySubtitlesInner');
+                    subtitlesContainer.appendChild(subtitlesElement);
+                    self._videoSubtitlesElem = subtitlesElement;
+                    //self.setSubtitleAppearance(subtitlesContainer, self._videoSubtitlesElem);
+                    self._videoElement.parentNode.appendChild(subtitlesContainer);
+                }
+
                 var audioIndex = options.playMethod === 'Transcode' ? null : options.mediaSource.DefaultAudioStreamIndex;
                 if (audioIndex) {
                     self.setAudioStreamIndex(audioIndex);
@@ -477,6 +501,11 @@ function _AvplayVideoPlayer(modules) {
         }
 
         this._videoElement = null;
+
+        if (this._videoSubtitlesElem) {
+            this._videoSubtitlesElem.parentNode.removeChild(this._videoSubtitlesElem);
+            this._videoSubtitlesElem = null;
+        }
     }
 
     this.volume = function (val) {
@@ -591,6 +620,15 @@ function _AvplayVideoPlayer(modules) {
 
                 onsubtitlechange: function (duration, text, data3, data4) {
                     console.debug("subtitleText: " + text);
+                    const e = self._videoSubtitlesElem;
+                    if (e) {
+                        if (text) {
+                            e.innerHTML = /*DOMPurify.sanitize(*/ normalizeSubtitleText(text);
+                            e.classList.remove('hide');
+                        } else {
+                            e.classList.add('hide');
+                        }
+                    }
                 },
 
                 ondrmevent: function (drmEvent, drmData) {
